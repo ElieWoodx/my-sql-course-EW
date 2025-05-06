@@ -22,7 +22,7 @@ SELECT
 	cc.Country
 	, cc.DateRecorded
 	, cc.DailyCases
-	, 'your answer' AS CumulativeCases
+	, SUM(cc.DailyCases) OVER (PARTITION BY cc.Country ORDER BY cc.DateRecorded) AS CumulativeCases
 FROM
 	CovidCase cc
 where cc.DateRecorded <= '2020-03-15' -- keep # rows returned manageable to avoid scrolling much
@@ -32,7 +32,7 @@ ORDER BY
 
 /*
 Calculate the cumulative number of cases in the UK as a whole
-Create a resultset with three columns: DateRecorded, DailyCases and CumulativeCases
+Create a result set with three columns: DateRecorded, DailyCases and CumulativeCases
 Note: we must first group by date (to aggregate over the 4 countries) to get the UK total daily cases
 */
 
@@ -48,7 +48,7 @@ GROUP BY
 SELECT
 	uk.DateRecorded
 	, uk.DailyCases
-	, 'your answer' CumulativeCases
+	, SUM(uk.DailyCases) OVER (ORDER BY uk.DateRecorded) AS CumulativeCases
 FROM
 	uk
 ORDER BY
@@ -71,12 +71,13 @@ FROM
 GROUP BY
 	cc.DateRecorded
     )
-SELECT 
+SELECT TOP 3
 	uk.DateRecorded
 	, uk.DailyCases
-	, 'your answer' AS Ranking
+	, RANK()OVER (ORDER BY uk.DailyCases DESC) AS Ranking
 FROM
-	uk;
+	uk
+	ORDER BY DailyCases DESC
 
 /*
 Find the three days with the highest number of cases in each country 
@@ -99,6 +100,31 @@ SELECT
 	*
 FROM
 	cte
+
+-- Below is Copilot answer
+
+;WITH RankedCases AS (
+    SELECT
+        cc.Country,
+        cc.DateRecorded,
+        cc.DailyCases,
+        RANK() OVER (PARTITION BY cc.Country ORDER BY cc.DailyCases DESC) AS Ranking
+    FROM
+        CovidCase cc
+)
+SELECT
+    Country,
+    DateRecorded,
+    DailyCases,
+    Ranking
+FROM
+    RankedCases
+WHERE
+    Ranking <= 3
+ORDER BY
+    Country,
+    Ranking;
+
 
 /*
 Advanced Section
@@ -152,3 +178,10 @@ FROM
 ORDER BY
 	cc.Country
 	, cc.DateRecorded;
+
+
+/*
+Other special functions are LEAD() and LAG()
+LAG gets the value from the previous row in the window
+Use this for example to calculate the change of a balance or inventory level from  one day to the next
+*/

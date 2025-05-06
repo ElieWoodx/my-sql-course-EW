@@ -172,3 +172,16 @@ WHERE
     AND ps.Ward = 'Dermatology'
 ORDER BY
     ps.AdmittedDate;
+
+
+SELECT
+    ps.AdmittedDate
+    , ps.Tariff
+    , LEAD(ps.Tariff) OVER (ORDER BY ps.AdmittedDate) AS NextDayTariff
+  , LAG(ps.Tariff) OVER (ORDER BY ps.AdmittedDate) AS PreviousDayTariff
+  , ps.Tariff - LAG(ps.Tariff) OVER (ORDER BY ps.AdmittedDate) AS ChangeOnPreviousDate
+FROM
+    PatientStay ps
+WHERE
+    ps.Hospital = 'Oxleas'
+    AND ps.Ward = 'Dermatology';
